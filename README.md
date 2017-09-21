@@ -12,6 +12,7 @@ npm i shimo-redis-scan
 const RedisScan = require('shimo-redis-scan')
 const Ioredis = require('ioredis')
 
+// All keys is optional
 const task = new RedisScan({
   // pattern
   pattern: 'key:*',
@@ -25,7 +26,9 @@ const task = new RedisScan({
     if (index > 10000) {
       stop()
     }
-  }
+  },
+  // aliyun redis cluster
+  aliyun: false
 })
 
 task.start().then(() => process.exit(0))
@@ -35,6 +38,7 @@ task.start().then(() => process.exit(0))
 
 1. You need to make your own catch-error logic
 2. Your node.js version must support async function
+3. Aliyun redis cluster only scan the first cluster
 
 ## License
 MIT

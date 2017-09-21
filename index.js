@@ -10,6 +10,7 @@ class RedisScan {
    * @param {pattern} [options.pattern='*'] redis pattern key like "key:*"
    * @param {number} [options.size=100] key count each scan
    * @param {function} [options.handler=console.log] handler function
+   * @param {boolean} [options.aliyun=false]
    */
   constructor (options = {}) {
     Object.assign(this, Object.assign({}, {
@@ -25,14 +26,19 @@ class RedisScan {
   }
 
   async start () {
-    const { redis, pattern, handler, size } = this
+    const { redis, pattern, handler, size, aliyun } = this
     let startTime = Date.now()
     let count = 0
     let cursor = 0
     let stop = false
 
     do {
-      const tempArr = await redis.scan(cursor, 'match', pattern, 'count', size)
+      let tempArr
+      if (aliyun) {
+        tempArr = await redis.iscan(0, cursor, 'match', pattern, 'count', size)
+      } else {
+        tempArr = await redis.scan(cursor, 'match', pattern, 'count', size)
+      }
 
       cursor = +tempArr[0]
 
