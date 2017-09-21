@@ -9,7 +9,7 @@ class RedisScan {
    * @param {ioreids} [options.redis=new ioredis()] ioredis client
    * @param {pattern} [options.pattern='*'] redis pattern key like "key:*"
    * @param {number} [options.size=100] key count each scan
-   * @param {function} [options.handler=console.log] handler function
+   * @param {function} [options.handler=console.log] promisify handler function
    * @param {boolean} [options.aliyun=false]
    */
   constructor (options = {}) {
@@ -26,43 +26,73 @@ class RedisScan {
   }
 
   async start () {
-    const { redis, pattern, handler, size, aliyun } = this
-    let startTime = Date.now()
-    let count = 0
+    const clusterCount = await this.getClusterCount()
+
+    this.scannedCount = 0
+    this.startTime = Date.now()
+
+    let clusterIndex = 0
+
+    while (clusterIndex < clusterCount && !this.stopped) {
+      await this.scanCluster(clusterIndex)
+      clusterIndex++
+    }
+
+    console.log(`scan result:
+  cluster count: ${clusterCount}
+  pattern: ${this.pattern}
+  scanned count: ${this.scannedCount}
+  expire: ${pretty(Date.now() - this.startTime)}
+    `)
+  }
+
+  async scanCluster (clusterIndex) {
+    const { handler } = this
     let cursor = 0
-    let stop = false
 
     do {
-      const [tmpCursor, arr] = await scan({
-        redis,
-        aliyun,
-        args: [cursor, 'match', pattern, 'count', size]
-      })
+      const [tmpCursor, arr] = await this.scan({ cursor, clusterIndex })
 
-      cursor += Number(tmpCursor)
+      cursor = Number(tmpCursor)
 
       for (let i = 0; i < arr.length; i++) {
-        count++
-        await handler(arr[i], {
-          index: cursor + i,
-          stop: () => { stop = true }
+        this.scannedCount++
+        await handler({
+          key: arr[i],
+          index: this.scannedCount,
+          clusterIndex,
+          stop: () => { this.stop = true }
         })
       }
-    } while (cursor !== 0 && stop === false)
-
-    const endTime = Date.now()
-    console.log(`scan pattern "${pattern}" done, count: ${count}, expire: ${pretty(endTime - startTime)}`)
-  }
-}
-
-function scan ({ redis, aliyun, args }) {
-  let command = 'scan'
-  if (aliyun) {
-    args.unshift('0')
-    command = 'iscan'
+    } while (cursor !== 0 && !this.stop)
   }
 
-  return redis.call(command, args)
+  // return 1 if cluster is not ailyun redis instance
+  async getClusterCount () {
+    if (!this.aliyun) {
+      return 1
+    }
+    const info = await this.redis.info()
+    const clusterModePrefix = 'nodecount:'
+    if (info.indexOf(clusterModePrefix) > -1) {
+      const line = info.split('\n').find(item => item.indexOf(clusterModePrefix) > -1)
+      if (line) {
+        return Number(line.replace(clusterModePrefix, ''))
+      }
+    }
+    return 1
+  }
+
+  scan (options) {
+    const params = [options.cursor, 'match', this.pattern, 'count', this.size]
+    let command = 'scan'
+    if (this.aliyun) {
+      params.unshift(options.clusterIndex)
+      command = 'iscan'
+    }
+
+    return this.redis.call(command, params)
+  }
 }
 
 module.exports = RedisScan

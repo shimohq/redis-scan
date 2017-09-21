@@ -1,5 +1,5 @@
 # redis-scan
-Scan redis keys with pattern and do something to them
+Scan redis keys with pattern and do something to them, Aliyun redis cluster is supported.
 
 ## install
 ```
@@ -21,7 +21,7 @@ const task = new RedisScan({
   // scan count per time
   size: 1000,
   // handler function which return promise
-  handler: function (key, { index, stop }) {
+  handler: function ({ key, index, stop, clusterIndex }) {
     console.log('current index:', index)
     if (index > 10000) {
       stop()
@@ -38,7 +38,7 @@ task.start().then(() => process.exit(0))
 
 1. You need to make your own catch-error logic
 2. Your node.js version must support async function
-3. Aliyun redis cluster only scan the first cluster
+3. Cluster mode is only enabled in Aliyun redis cluster 
 
 ## License
 MIT
