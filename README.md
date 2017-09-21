@@ -12,7 +12,7 @@ npm i shimo-redis-scan
 const RedisScan = require('shimo-redis-scan')
 const Ioredis = require('ioredis')
 
-const scan = new RedisScan({
+const task = new RedisScan({
   // pattern
   pattern: 'key:*',
   // redis client
@@ -27,7 +27,13 @@ const scan = new RedisScan({
     }
   }
 })
+
+task.scan().then(() => process.exit(0))
 ```
+
+## note
+1. This tool wraps your handler with try catch and invoke handler with await, You need to make your own catch-error logic
+2. Your node.js verstion must support async function
 
 ## License
 MIT
