@@ -6,8 +6,8 @@ class RedisScan {
    * Creates an instance of RedisScan.
    *
    * @param {object} [options]
-   * @param {ioreids} [options.redis=new ioredis()] ioredis client
-   * @param {pattern} [options.pattern='*'] redis pattern key like "key:*"
+   * @param {ioredis} [options.redis=new ioredis()] ioredis client
+   * @param {string} [options.pattern='*'] redis pattern key like "key:*"
    * @param {number} [options.size=100] key count each scan
    * @param {function} [options.handler=console.log] promisify handler function
    * @param {boolean} [options.aliyun=false]
@@ -72,12 +72,16 @@ class RedisScan {
     if (!this.aliyun) {
       return 1
     }
+
     const info = await this.redis.info()
-    const clusterModePrefix = 'nodecount:'
-    if (info.indexOf(clusterModePrefix) > -1) {
-      const line = info.split('\n').find(item => item.indexOf(clusterModePrefix) > -1)
+    const prefix = 'nodecount:'
+    const isClusterMode = info.indexOf(prefix) > -1
+
+    if (isClusterMode) {
+      const line = info.split('\n').find(item => item.indexOf(prefix) > -1)
       if (line) {
-        return Number(line.replace(clusterModePrefix, ''))
+        const clusterCount = Number(line.replace(prefix, ''))
+        return clusterCount
       }
     }
     return 1
