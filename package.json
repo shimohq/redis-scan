@@ -1,5 +1,5 @@
 {
-  "name": "redis-scan",
+  "name": "shimo-redis-scan",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

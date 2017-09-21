@@ -20,7 +20,7 @@ class RedisScan {
     }, options))
   }
 
-  async scan () {
+  async start () {
     const { redis, pattern, handler, size } = this
     let startTime = Date.now()
     let count = 0
@@ -53,5 +53,3 @@ class RedisScan {
 }
 
 module.exports = RedisScan
-
-new RedisScan().scan()

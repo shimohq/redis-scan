@@ -28,7 +28,7 @@ const task = new RedisScan({
   }
 })
 
-task.scan().then(() => process.exit(0))
+task.start().then(() => process.exit(0))
 ```
 
 ## notes
