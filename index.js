@@ -15,9 +15,13 @@ class RedisScan {
     Object.assign(this, Object.assign({}, {
       size: 100,
       pattern: '*',
-      handler: console.log,
-      redis: new Ioredis()
+      handler: console.log
     }, options))
+
+    // Avoid throw error if local redis not exists
+    if (!this.redis) {
+      this.redis = new Ioredis()
+    }
   }
 
   async start () {
