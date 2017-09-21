@@ -31,9 +31,10 @@ const task = new RedisScan({
 task.scan().then(() => process.exit(0))
 ```
 
-## note
-1. This tool wraps your handler with try catch and invoke handler with await, You need to make your own catch-error logic
-2. Your node.js verstion must support async function
+## notes
+
+1. You need to make your own catch-error logic
+2. Your node.js version must support async function
 
 ## License
 MIT
