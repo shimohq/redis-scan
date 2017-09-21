@@ -33,33 +33,36 @@ class RedisScan {
     let stop = false
 
     do {
-      let tempArr
-      if (aliyun) {
-        tempArr = await redis.iscan(0, cursor, 'match', pattern, 'count', size)
-      } else {
-        tempArr = await redis.scan(cursor, 'match', pattern, 'count', size)
-      }
+      const [tmpCursor, arr] = await scan({
+        redis,
+        aliyun,
+        args: [cursor, 'match', pattern, 'count', size]
+      })
 
-      cursor = +tempArr[0]
-
-      const arr = tempArr[1]
+      cursor += Number(tmpCursor)
 
       for (let i = 0; i < arr.length; i++) {
-        try {
-          count++
-          await handler(arr[i], {
-            index: cursor + i,
-            stop: () => { stop = true }
-          })
-        } catch (e) {
-          console.warn(e.message, e.stack)
-        }
+        count++
+        await handler(arr[i], {
+          index: cursor + i,
+          stop: () => { stop = true }
+        })
       }
     } while (cursor !== 0 && stop === false)
 
     const endTime = Date.now()
     console.log(`scan pattern "${pattern}" done, count: ${count}, expire: ${pretty(endTime - startTime)}`)
   }
+}
+
+function scan ({ redis, aliyun, args }) {
+  let command = 'scan'
+  if (aliyun) {
+    args.unshift('0')
+    command = 'iscan'
+  }
+
+  return redis.call(command, args)
 }
 
 module.exports = RedisScan
