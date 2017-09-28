@@ -16,7 +16,8 @@ class RedisScan {
     Object.assign(this, Object.assign({}, {
       size: 100,
       pattern: '*',
-      handler: console.log
+      handler: console.log,
+      summary: true
     }, options))
 
     // Avoid throw error if local redis not exists
@@ -38,6 +39,9 @@ class RedisScan {
       clusterIndex++
     }
 
+    if (!this.summary) {
+      return
+    }
     console.log(`scan result:
   cluster count: ${clusterCount}
   pattern: ${this.pattern}
